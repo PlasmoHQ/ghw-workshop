@@ -1,10 +1,7 @@
-import cssText from "data-text:~style.css"
-import type { PlasmoContentScript } from "plasmo"
-import { useReducer } from "react"
+import cssText from "data-text:~/style.css"
+import { useEffect, useState } from "react"
 
-export const config: PlasmoContentScript = {
-  matches: ["https://www.plasmo.com/*"]
-}
+import type { WikiMessage, WikiTldr } from "~background"
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -12,27 +9,34 @@ export const getStyle = () => {
   return style
 }
 
-const PlasmoOverlay = () => {
-  const [count, increase] = useReducer((c) => c + 1, 0)
+function IndexPopup() {
+  const [wikiTldr, setWikiTldr] = useState<WikiTldr>(null)
+
+  useEffect(() => {
+    chrome.runtime.onMessage.addListener(function ({
+      type,
+      text
+    }: WikiMessage) {
+      setWikiTldr(text)
+      return true
+    })
+  }, [])
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        padding: 16
-      }}>
-      <button
-        onClick={() => increase()}
-        type="button"
-        className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-        Count:
-        <span className="inline-flex items-center justify-center w-8 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
-          {count}
-        </span>
-      </button>
+    <div>
+      <div className="block p-6 max-w-sm bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+        <h1 className="mb-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+          Wikipedia TLDR
+        </h1>
+        <h2 className="mb-2 text-2xl font-bold tracking-tight text-gray-600 dark:text-white">
+          {wikiTldr && wikiTldr["title"]}
+        </h2>
+        <p className="font-normal text-gray-700 dark:text-gray-400">
+          {wikiTldr && wikiTldr["extract"]}
+        </p>
+      </div>
     </div>
   )
 }
 
-export default PlasmoOverlay
+export default IndexPopup
